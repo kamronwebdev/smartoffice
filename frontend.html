@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Centers & Offices</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loader {
+            border-top-color: #3498db;
+            -webkit-animation: spinner 1.5s linear infinite;
+            animation: spinner 1.5s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-blue-600 p-4 text-white shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold font-sans cursor-pointer" onclick="fetchCenters()">🏢 CityBiz Offices</h1>
+            <div>
+                <button class="bg-blue-800 px-4 py-2 rounded hover:bg-blue-700" onclick="fetchCenters()">Asosiy sahifa</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto mt-8 p-4">
+        
+        <!-- Loading Spinner -->
+        <div id="loading" class="hidden flex justify-center items-center my-10">
+            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div>
+        </div>
+
+        <!-- Dynamic Content Area -->
+        <div id="content" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Cards will be injected here -->
+        </div>
+
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
+
+        // Elementlarni tanlash
+        const contentDiv = document.getElementById('content');
+        const loadingDiv = document.getElementById('loading');
+
+        function showLoading() {
+            loadingDiv.classList.remove('hidden');
+            contentDiv.innerHTML = '';
+        }
+
+        function hideLoading() {
+            loadingDiv.classList.add('hidden');
+        }
+
+        // Barcha biznes markazlarni yuklash
+        async function fetchCenters() {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE_URL}/business-centers/`);
+                const data = await response.json();
+                hideLoading();
+
+                if(data.length === 0) {
+                    contentDiv.innerHTML = `<p class="text-gray-500 text-xl col-span-full text-center mt-10">Hozircha biznes markazlar mavjud emas.</p>`;
+                    return;
+                }
+
+                data.forEach(center => {
+                    const card = document.createElement('div');
+                    card.className = "bg-white rounded-lg shadow-lg overflow-hidden transition-transform transform hover:-translate-y-1 hover:shadow-xl cursor-pointer";
+                    card.innerHTML = `
+                        <div class="p-6">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-2">${center.name}</h2>
+                            <p class="text-gray-600 mb-4 whitespace-nowrap overflow-hidden text-ellipsis">${center.description}</p>
+                            <div class="flex items-center text-sm text-gray-500 mb-4">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                <span>${center.address}</span>
+                                ${center.map_link ? `
+                                    <a href="${center.map_link}" target="_blank" class="ml-2 text-blue-500 hover:text-blue-700 hover:underline flex items-center" title="Xaritada ko'rish">
+                                        [Xaritani ochish]
+                                    </a>
+                                ` : ''}
+                            </div>
+                            <button onclick="fetchRooms(${center.id}, '${center.name.replace(/'/g, "\\'")}')" class="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition-colors">
+                                Xonalarni ko'rish
+                            </button>
+                        </div>
+                    `;
+                    contentDiv.appendChild(card);
+                });
+            } catch (error) {
+                hideLoading();
+                contentDiv.innerHTML = `<p class="text-red-500">Xatolik yuz berdi: Server ishlayotganiga ishonch hosil qiling.</p>`;
+            }
+        }
+
+        // Bitta markaz ichidagi xonalarni yuklash
+        async function fetchRooms(centerId, centerName) {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE_URL}/rooms/?business_center=${centerId}`);
+                const data = await response.json();
+                hideLoading();
+
+                // Header yasash
+                contentDiv.innerHTML = `
+                    <div class="col-span-full flex justify-between items-center mb-4">
+                        <h2 class="text-3xl font-bold text-gray-800">${centerName} - Ofislar</h2>
+                        <button onclick="fetchCenters()" class="text-blue-500 hover:underline">&larr; Orqaga</button>
+                    </div>
+                `;
+
+                if(data.length === 0) {
+                    contentDiv.innerHTML += `<p class="text-gray-500 col-span-full">Bu markazda hozircha ofis xonalari yo'q.</p>`;
+                    return;
+                }
+
+                data.forEach(room => {
+                    // QR code rasm manzili yoki placeholder
+                    const qrUrl = room.qr_code ? `http://127.0.0.1:8000${room.qr_code}` : 'https://via.placeholder.com/150';
+                    
+                    const card = document.createElement('div');
+                    card.className = "bg-white rounded-lg shadow border border-gray-200 p-5 flex flex-col";
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-green-400">Xona: ${room.room_number}</span>
+                                <h3 class="text-xl font-bold mt-2">Qavat: ${room.floor}</h3>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-lg font-bold text-blue-600">${room.price ? room.price + ' ' + room.currency : 'Kelishilgan'}</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 flex-grow text-sm mb-4">${room.description || "Qo'shimcha ma'lumot kiritilmagan"}</p>
+                        
+                        <div class="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-4">
+                            <div class="bg-gray-50 p-2 rounded"><b>Maydoni:</b> ${room.area} kv.m</div>
+                            <div class="bg-gray-50 p-2 rounded"><b>Odam sig'imi:</b> ${room.capacity} ta</div>
+                            <div class="bg-gray-50 p-2 rounded col-span-2">
+                                <b>Holati:</b> ${room.status === 'OCCUPIED' ? `<span class="text-red-500">Band (${room.assigned_to || 'Noma\\'lum'})</span>` : room.status === 'AVAILABLE' ? `<span class="text-green-500">Bo'sh</span>` : room.status }
+                            </div>
+                        </div>
+
+                        ${room.qr_code ? `
+                        <div class="mt-auto border-t pt-4 flex flex-col items-center">
+                            <p class="text-xs text-gray-500 mb-2">Skaner qilish uchun QR-Kod</p>
+                            <img src="${qrUrl}" alt="QR Code" class="w-32 h-32 object-contain border p-1 rounded bg-white">
+                            <a href="${qrUrl}" download target="_blank" class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium">QR kodni yuklab olish &darr;</a>
+                        </div>
+                        ` : ''}
+                    `;
+                    contentDiv.appendChild(card);
+                });
+
+            } catch (error) {
+                hideLoading();
+                contentDiv.innerHTML = `<p class="text-red-500">Xatolik yuz berdi: ${error.message}</p>`;
+            }
+        }
+
+        // Dastlab markazlarni yuklash
+        window.onload = () => {
+            fetchCenters();
+        };
+    </script>
+</body>
+</html>
