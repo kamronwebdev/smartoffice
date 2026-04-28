@@ -80,7 +80,7 @@ class BusinessCenter(models.Model):
                 border=4,
             )
             # URL format misoli (frontenddagi manzil):
-            qr_data = f"http://localhost:5173/center/{self.id}"
+            qr_data = f"https://smartoffice-virid.vercel.app/center/{self.id}"
             qr.add_data(qr_data)
             qr.make(fit=True)
 
@@ -143,7 +143,7 @@ class OfficeRoom(models.Model):
                 border=4,
             )
             # URL format misoli (frontenddagi manzil):
-            qr_data = f"http://localhost:5173/room/{self.id}"
+            qr_data = f"https://smartoffice-virid.vercel.app/room/{self.id}"
             qr.add_data(qr_data)
             qr.make(fit=True)
 
