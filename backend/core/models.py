@@ -18,6 +18,49 @@ class BusinessCenter(models.Model):
     total_floors = models.IntegerField(verbose_name="Qavatlar soni", default=1)
     map_link = models.URLField(max_length=1000, blank=True, null=True, verbose_name="Xarita havolasi (Google/Yandex)", help_text="Masalan: https://yandex.uz/maps/...")
     contact_phone = models.CharField(max_length=50, verbose_name="Telefon raqami", blank=True, null=True)
+
+    BUILDING_CLASS_CHOICES = [
+        ('A', 'Class A (Eng yuqori)'),
+        ('B+', 'Class B+'),
+        ('B', 'Class B'),
+        ('C', 'Class C'),
+    ]
+
+    # About
+    building_class = models.CharField(max_length=2, choices=BUILDING_CLASS_CHOICES, blank=True, null=True, verbose_name="Bino sinfi")
+    year_built = models.PositiveIntegerField(blank=True, null=True, verbose_name="Qurilgan yili")
+    total_area = models.FloatField(blank=True, null=True, verbose_name="Umumiy maydoni (kv.m)")
+
+    # Infrastructure
+    has_parking = models.BooleanField(default=False, verbose_name="Avtoturargoh mavjudmi")
+    parking_capacity = models.PositiveIntegerField(blank=True, null=True, verbose_name="Avtoturargoh sig'imi")
+    elevator_count = models.PositiveIntegerField(default=0, verbose_name="Liftlar soni")
+    security_24_7 = models.BooleanField(default=False, verbose_name="24/7 Xavfsizlik")
+    access_control = models.BooleanField(default=False, verbose_name="Kirishni nazorat qilish (Access Control)")
+    has_reception = models.BooleanField(default=False, verbose_name="Qabulxona (Reception)")
+    has_backup_power = models.BooleanField(default=False, verbose_name="Zaxira elektr quvvati (Generator)")
+    heating_cooling = models.CharField(max_length=255, blank=True, null=True, verbose_name="Isitish/Sovutish tizimi")
+    internet_providers = models.CharField(max_length=255, blank=True, null=True, verbose_name="Internet provayderlari")
+
+    # Amenities
+    has_wifi = models.BooleanField(default=False, verbose_name="Wi-Fi")
+    has_meeting_rooms = models.BooleanField(default=False, verbose_name="Majlislar xonasi")
+    has_conference_hall = models.BooleanField(default=False, verbose_name="Konferensiya zali")
+    has_kitchen = models.BooleanField(default=False, verbose_name="Oshxona")
+    has_lounge = models.BooleanField(default=False, verbose_name="Lounge oromgoxi")
+    has_coffee_zone = models.BooleanField(default=False, verbose_name="Kofe zonasi")
+    has_terrace = models.BooleanField(default=False, verbose_name="Terrasa")
+    has_chill_zone = models.BooleanField(default=False, verbose_name="Chill Zone (Dam olish)")
+
+    # Contact (Extra)
+    email = models.EmailField(blank=True, null=True, verbose_name="Email")
+    website = models.URLField(max_length=500, blank=True, null=True, verbose_name="Veb-sayt")
+    telegram = models.CharField(max_length=100, blank=True, null=True, verbose_name="Telegram (@username yoki havola)")
+    instagram = models.CharField(max_length=100, blank=True, null=True, verbose_name="Instagram (@username yoki havola)")
+
+    # Working time
+    working_hours = models.CharField(max_length=255, blank=True, null=True, verbose_name="Ish vaqti", help_text="Masalan: Dush-Juma, 09:00-18:00 YOKI 24/7")
+
     admins = models.ManyToManyField(User, related_name='managed_centers', blank=True, verbose_name="Markaz Adminlari")
     logo = models.ImageField(upload_to='center_logos/', blank=True, null=True, verbose_name="Markaz Logotipi")
     building_image = models.ImageField(upload_to='center_images/', blank=True, null=True, verbose_name="Bino Rasmi")
@@ -76,7 +119,7 @@ class OfficeRoom(models.Model):
     room_number = models.CharField(max_length=50, verbose_name="Xona raqami")   
     floor = models.DecimalField(max_digits=4, decimal_places=1, verbose_name="Qavat (masalan: 1, 1.5, 2)")
     area = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Maydoni (kv.m)")
-    price = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Narxi", blank=True, null=True)
+    price = models.IntegerField(verbose_name="Narxi", blank=True, null=True)
     price_period = models.CharField(max_length=20, choices=PRICE_PERIOD_CHOICES, default='MONTHLY', verbose_name="Narx muddati")
     currency = models.CharField(max_length=3, choices=[('UZS', 'UZS'), ('USD', 'USD')], default='UZS', verbose_name="Valyuta")
     capacity = models.IntegerField(verbose_name="Odam sig'imi")
@@ -157,3 +200,4 @@ def send_email_to_new_admins(sender, instance, action, pk_set, **kwargs):
                     )
                 except Exception as e:
                     print(f"Xabarnoma jo'natishda xatolik: {e}")
+

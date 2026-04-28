@@ -2,7 +2,7 @@ from rest_framework import viewsets, permissions, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-from .models import BusinessCenter, OfficeRoom, RoomType
+from .models import BusinessCenter, OfficeRoom, RoomType, RoomImage
 from .serializers import BusinessCenterSerializer, OfficeRoomSerializer, UserSerializer, RoomTypeSerializer
 from .permissions import IsSuperAdminOrCenterAdminOrReadOnly
 
@@ -71,6 +71,9 @@ class BusinessCenterViewSet(viewsets.ModelViewSet):
         if 'admins' not in self.request.data and admin_user:
             business_center.admins.add(admin_user)
 
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
 class OfficeRoomViewSet(viewsets.ModelViewSet):
     """
     Ofis xonalari ro'yxati, filtrlash va detal ma'lumotlar uchun API ViewSet
@@ -101,4 +104,40 @@ class OfficeRoomViewSet(viewsets.ModelViewSet):
                 raise PermissionDenied("Siz faqat o'zingizning biznes markazingizga xona qo'sha olasiz.")
 
         serializer.save()
+
+    @action(detail=True, methods=['post', 'delete'])
+    def images(self, request, pk=None):
+        room = self.get_object()
+        # Xavfsizlik: faqat superadmin yoki shu markaz admini rasmlarni o'zgartirishi mumkin
+        if not request.user.is_superuser and not room.business_center.admins.filter(id=request.user.id).exists():
+            return Response({"detail": "Sizda ushbu xonaga rasm qo'shish/o'chirish huquqi yo'q."}, status=403)
+
+        if request.method == 'POST':
+            # Rasm yuklash
+            images = request.FILES.getlist('images')
+            if not images:
+                return Response({"detail": "Rasmlar taqdim etilmadi (images)."}, status=400)
+            
+            created_images = []
+            for image in images:
+                img_obj = RoomImage.objects.create(room=room, image=image)
+                created_images.append({
+                    "id": img_obj.id,
+                    "image": request.build_absolute_uri(img_obj.image.url)
+                })
+            
+            return Response({"detail": "Rasmlar muvaffaqiyatli saqlandi.", "images": created_images}, status=201)
+            
+        elif request.method == 'DELETE':
+            # Rasm o'chirish
+            image_id = request.data.get('image_id')
+            if not image_id:
+                return Response({"detail": "O'chirish uchun image_id kerak."}, status=400)
+                
+            try:
+                img_obj = RoomImage.objects.get(id=image_id, room=room)
+                img_obj.delete()
+                return Response({"detail": "Rasm o'chirildi."}, status=204)
+            except RoomImage.DoesNotExist:
+                return Response({"detail": "Rasm topilmadi."}, status=404)
 

@@ -5,10 +5,11 @@ from .models import BusinessCenter, OfficeRoom, RoomImage, RoomType, AdminProfil
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
     raw_password = serializers.SerializerMethodField()
+    managed_centers = serializers.PrimaryKeyRelatedField(many=True, required=False, queryset=BusinessCenter.objects.all())
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'password', 'raw_password']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'password', 'raw_password', 'managed_centers']
 
     def get_raw_password(self, obj):
         try:
@@ -17,7 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
             return ""
 
     def create(self, validated_data):
-        # Parolni shifrlab saqlash uchun create_user() dan foydalanamiz
+        managed_centers = validated_data.pop('managed_centers', [])
         password = validated_data.pop('password', None)
         user = User.objects.create_user(
             username=validated_data['username'],
@@ -28,12 +29,14 @@ class UserSerializer(serializers.ModelSerializer):
         )
         if password:
             AdminProfile.objects.create(user=user, raw_password=password)
-        # Avtomatik ravishda tashkilot adminlari uchun staff statusini belgilaymiz
         user.is_staff = True
         user.save()
+        if managed_centers:
+            user.managed_centers.set(managed_centers)
         return user
 
     def update(self, instance, validated_data):
+        managed_centers = validated_data.pop('managed_centers', None)
         password = validated_data.pop('password', None)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
@@ -43,8 +46,10 @@ class UserSerializer(serializers.ModelSerializer):
             profile, created = AdminProfile.objects.get_or_create(user=instance)
             profile.raw_password = password
             profile.save()
-            
+
         instance.save()
+        if managed_centers is not None:
+            instance.managed_centers.set(managed_centers)
         return instance
 
 class RoomImageSerializer(serializers.ModelSerializer):
@@ -71,4 +76,6 @@ class BusinessCenterSerializer(serializers.ModelSerializer):
     class Meta:
         model = BusinessCenter
         fields = '__all__'
+
+
 

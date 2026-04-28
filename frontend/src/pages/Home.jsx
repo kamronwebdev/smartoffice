@@ -4,6 +4,20 @@ import { motion } from 'framer-motion';
 import api from '../services/api';
 import { formatPhoneNumber } from '../utils/formatters';
 
+const getCenterCoverImage = (center) => {
+  if (center.building_image) return center.building_image;
+
+  for (const room of center.rooms || []) {
+    const mainImage = room.images?.find((image) => image.is_main)?.image;
+    if (mainImage) return mainImage;
+
+    const firstImage = room.images?.[0]?.image;
+    if (firstImage) return firstImage;
+  }
+
+  return null;
+};
+
 function Home() {
   const [centers, setCenters] = useState([]);
 
@@ -40,22 +54,22 @@ function Home() {
             className="group bg-white rounded-[1.5rem] md:rounded-[2rem] p-1 border border-slate-100 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:-translate-y-1 md:hover:-translate-y-2 transition-all duration-300 flex flex-col"
           >
             <div className="h-full w-full bg-white rounded-[1.4rem] md:rounded-[1.8rem] relative overflow-hidden flex flex-col">
-              
-              {center.building_image && (
+
+              {getCenterCoverImage(center) && (
                 <div className="h-44 md:h-52 w-full shrink-0 relative overflow-hidden">
-                  <img src={center.building_image} alt={center.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                  <img src={getCenterCoverImage(center)} alt={center.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-slate-900/20 to-transparent"></div>
                 </div>
               )}
 
-              <div className={`flex-grow flex flex-col relative z-10 ${center.building_image ? 'p-5 pt-0 md:p-6 md:pt-0' : 'p-6 md:p-8'}`}>
-                {!center.building_image && (
+              <div className={`flex-grow flex flex-col relative z-10 ${getCenterCoverImage(center) ? 'p-5 pt-0 md:p-6 md:pt-0' : 'p-6 md:p-8'}`}>
+                {!getCenterCoverImage(center) && (
                   <div className="absolute -top-16 -right-16 w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-full blur-3xl opacity-20 group-hover:scale-150 transition-transform duration-700"></div>
                 )}
 
                 <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center text-2xl shrink-0 z-20 ${
-                  center.building_image 
-                    ? '-mt-6 md:-mt-8 mb-3 md:mb-4 border-4 border-white shadow-lg bg-white overflow-hidden' 
+                  getCenterCoverImage(center)
+                    ? '-mt-6 md:-mt-8 mb-3 md:mb-4 border-4 border-white shadow-lg bg-white overflow-hidden'
                     : 'bg-gradient-to-br from-blue-100 to-indigo-100 mb-6 shadow-inner text-indigo-600'
                 }`}>
                   {center.logo ? (
@@ -76,7 +90,7 @@ function Home() {
                 )}
               </div>
 
-              <div className={`mt-auto border-t border-slate-100 flex items-center justify-between relative z-10 bg-white/50 backdrop-blur-md ${center.building_image ? 'px-4 pb-4 pt-3 md:px-6 md:pb-6 md:pt-4' : 'pt-4 mt-2 pb-0 px-6 mb-6 md:pt-6 md:mt-4 md:px-8 md:mb-8'}`}>
+              <div className={`mt-auto border-t border-slate-100 flex items-center justify-between relative z-10 bg-white/50 backdrop-blur-md ${getCenterCoverImage(center) ? 'px-4 pb-4 pt-3 md:px-6 md:pb-6 md:pt-4' : 'pt-4 mt-2 pb-0 px-6 mb-6 md:pt-6 md:mt-4 md:px-8 md:mb-8'}`}>
                 {center.map_link && (
                   <a href={center.map_link} target="_blank" rel="noopener noreferrer" className="text-xs md:text-sm text-indigo-500 hover:text-indigo-700 font-bold hover:underline truncate mr-2 active:scale-95">
                     Xaritada ko'rish

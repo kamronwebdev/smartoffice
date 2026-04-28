@@ -152,3 +152,5 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'kamronbektirkashev05@gmail.com'
 EMAIL_HOST_PASSWORD = 'cuonvgyqkxreebhh'
 DEFAULT_FROM_EMAIL = 'SmartOffice <kamronbektirkashev05@gmail.com>'
+DEFAULT_CHARSET = 'utf-8'
+

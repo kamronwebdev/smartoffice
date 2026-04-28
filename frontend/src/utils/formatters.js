@@ -1,6 +1,9 @@
 export const formatPrice = (price) => {
   if (!price) return "0";
-  return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  // Eski datalar kelsa (masalan 12.00 kabi), faqat butun qismini olamiz
+  const parsedPrice = parseInt(price, 10);
+  if (isNaN(parsedPrice)) return "0";
+  return parsedPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 };
 
 export const formatPhoneNumber = (phone) => {

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import re
 
 files = ["frontend/src/pages/ManageCenter.jsx", "frontend/src/pages/EditCenter.jsx"]
@@ -6,24 +7,9 @@ for file_path in files:
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
 
-    # The corrupted section starts with my new block prefix
-    start_str = '<div className="col-span-1 sm:col-span-2 lg:col-span-3 mt-4 border-2 border-indigo-50'
-    start_idx = content.find(start_str)
+    start_str = '<div className="sm:col-span-2 lg:col-span-1 border border-slate-200 p-3 rounded-xl bg-slate-50 space-y-3">'
     
-    if start_idx == -1:
-        print(f"Skipping {file_path}")
-        continue
-
-    # It ends before "        {/* Media */}"
-    end_str = '        {/* Media */}'
-    end_idx = content.find(end_str, start_idx)
-    
-    if end_idx == -1:
-        print(f"Could not find end of corrupted block in {file_path}")
-        continue
-
-    # We replace from start_idx to end_idx with ONLY our perfect block and closing the grid/section:
-    perfect_block = """<div className="col-span-1 sm:col-span-2 lg:col-span-3 mt-4 border-2 border-indigo-50 p-5 rounded-2xl bg-gradient-to-r from-slate-50 to-indigo-50/50 shadow-sm">
+    new_block = """<div className="col-span-1 sm:col-span-2 lg:col-span-3 mt-4 border-2 border-indigo-50 p-5 rounded-2xl bg-gradient-to-r from-slate-50 to-indigo-50/50 shadow-sm">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                   <div>
                     <label className="text-base font-bold text-slate-800 mb-1 block">Ish vaqtini belgilash</label>
@@ -82,13 +68,17 @@ for file_path in files:
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
-          </div>
+              </div>"""
 
-"""
-    
-    new_content = content[:start_idx] + perfect_block + content[end_idx:]
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write(new_content)
-    print(f"Cleaned {file_path}")
+    start_idx = content.find(start_str)
+    if start_idx != -1:
+        end_cond_idx = content.find(")}", start_idx)
+        end_div_idx = content.find("</div>", end_cond_idx) + 6
+        
+        new_content = content[:start_idx] + new_block + content[end_div_idx:]
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(new_content)
+        print(f"Patched {file_path}")
+    else:
+        print(f"Could not find start string in {file_path}")
+

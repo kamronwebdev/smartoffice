@@ -9,12 +9,14 @@ function AdminList() {
   const [editingAdmin, setEditingAdmin] = useState(null);
   const [visiblePasswords, setVisiblePasswords] = useState({});
 
+  const [centers, setCenters] = useState([]);
   const [formData, setFormData] = useState({
     username: '',
     first_name: '',
     last_name: '',
     email: '',
-    password: ''
+    password: '',
+    managed_centers: []
   });
 
   const togglePasswordVisibility = (id) => {
@@ -36,17 +38,41 @@ function AdminList() {
     }
   };
 
+  const fetchCenters = async () => {
+    try {
+      const res = await api.get('/business-centers/');
+      setCenters(res.data.results || res.data);
+    } catch (e) {
+      console.error("Markazlarni yuklashda xatolik", e);
+    }
+  };
+
   useEffect(() => {
     fetchAdmins();
+    fetchCenters();
   }, []);
 
   const handleOpenModal = (admin = null) => {
     if (admin) {
       setEditingAdmin(admin);
-      setFormData({ username: admin.username, first_name: admin.first_name || '', last_name: admin.last_name || '', email: admin.email || '', password: '' });
+      setFormData({ 
+        username: admin.username, 
+        first_name: admin.first_name || '', 
+        last_name: admin.last_name || '', 
+        email: admin.email || '', 
+        password: '',
+        managed_centers: admin.managed_centers || []
+      });
     } else {
       setEditingAdmin(null);
-      setFormData({ username: '', first_name: '', last_name: '', email: '', password: '' });
+      setFormData({ 
+        username: '', 
+        first_name: '', 
+        last_name: '', 
+        email: '', 
+        password: '',
+        managed_centers: []
+      });
     }
     setShowModal(true);
   };
@@ -54,12 +80,19 @@ function AdminList() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = { 
+        username: formData.username, 
+        first_name: formData.first_name, 
+        last_name: formData.last_name, 
+        email: formData.email,
+        managed_centers: formData.managed_centers
+      };
+      if (formData.password) payload.password = formData.password;
+
       if (editingAdmin) {
-        const payload = { username: formData.username, first_name: formData.first_name, last_name: formData.last_name, email: formData.email };
-        if (formData.password) payload.password = formData.password;
         await api.patch(`/users/${editingAdmin.id}/`, payload);
       } else {
-        await api.post('/users/', formData);
+        await api.post('/users/', payload);
       }
       setShowModal(false);
       fetchAdmins();
@@ -209,3 +242,7 @@ function AdminList() {
 }
 
 export default AdminList;
+
+
+
+
