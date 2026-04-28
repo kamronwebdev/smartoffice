@@ -11,7 +11,8 @@ function Navbar() {
         <div className="flex justify-between items-center h-16 md:h-20">
           <div className="flex items-center">
             <Link to="/" className="text-xl md:text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-80 transition-opacity flex items-center gap-1.5 md:gap-2">
-              <span className="text-2xl md:text-3xl">🏢</span> <span className="hidden sm:inline">SmartOffice</span><span className="sm:hidden">SmartOffice</span>
+              <img src="/favicon.svg" alt="SmartOffice Logo" className="w-8 h-8 md:w-9 md:h-9 object-contain" />
+              <span className="hidden sm:inline">SmartOffice</span><span className="sm:hidden">SmartOffice</span>
             </Link>
           </div>
           
